@@ -1,6 +1,47 @@
 // Ionic Variables and Theming. For more info, please see:
 // http://ionicframework.com/docs/theming/
 
+@font-face {
+  font-family: 'Modak';
+  src: url('../assets/fonts/Modak-Regular.ttf');
+  font-style: normal;
+  font-weight: 100;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('../assets/fonts/Montserrat-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('../assets/fonts/Lato-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  src: url('../assets/fonts/Oswald-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Manjari';
+  src: url('../assets/fonts/Manjari-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('../assets/fonts/PlayfairDisplay-Regular.ttf');
+  font-weight: 400;
+  font-style: normal;
+}
 /** Ionic CSS Variables **/
 :root {
   /** primary **/
@@ -74,4 +115,26 @@
   --ion-color-light-contrast-rgb: 0, 0, 0;
   --ion-color-light-shade: #d7d8da;
   --ion-color-light-tint: #f5f6f9;
+
+  // --ion-color-pink: #f50057;
+  // --ion-color-pink-rgb: 245,0,87;
+  // --ion-color-pink-contrast: #000000;
+  // --ion-color-pink-contrast-rgb: 0, 0, 0;
+  // --ion-color-pink-shade: #f48fb1;
+  // --ion-color-pink-tint: #c51162;
+
+  /* Set the background of the entire app */
+  --ion-background-color: #fff59d;
+
+  /* Set the font family of the entire app */
+  // --ion-font-family: 'Montserrat', sans-serif;
+  // --ion-font-family: 'Modak', cursive;
+  // --ion-font-family: 'Lato', sans-serif;
+  // --ion-font-family: 'Manjari', sans-serif;
+  // --ion-font-family: 'Oswald', sans-serif;
+  --ion-font-family: 'Playfair Display', serif;
+
+
+  //Color de Texto
+  --ion-text-color: #212121;
 }
