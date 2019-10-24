@@ -59,6 +59,7 @@ export class DashboardPage implements OnInit {
   private beautyPhotosCollection: AngularFirestoreCollection<FireDTO>;
   private uglyPhotosCollection: AngularFirestoreCollection<FireDTO>;
 
+  // EMM HAY QUE HACER ITERAR ALGO MOTRAR FOTOS??
 
   // constructor(private storage: AngularFireStorage, private database: AngularFirestore) {
   //   this.isUploading = false;
