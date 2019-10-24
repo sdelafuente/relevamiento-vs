@@ -180,6 +180,10 @@ export class DashboardPage implements OnInit {
 
   images = [];
 
+  public verTodas: any;
+  public verMisFotos: any;
+  public tomarFoto: any;
+
   constructor(private camera: Camera, private file: File, private webview: WebView,
     private actionSheetController: ActionSheetController, private toastController: ToastController,
     private storage: Storage, private platform: Platform, private loadingController: LoadingController,
@@ -187,7 +191,11 @@ export class DashboardPage implements OnInit {
     private database: AngularFirestore,
     private fireStorage: AngularFireStorage,
     public authService: AuthenticationService
-   ) { }
+   ) {
+     this.verTodas = false;
+     this.verMisFotos = false;
+     this.tomarFoto = true;
+   }
 
   ngOnInit() {
     this.platform.ready().then(() => {
@@ -352,5 +360,21 @@ export class DashboardPage implements OnInit {
       ]
     });
     await actionSheet.present();
+  }
+
+  listarTodas() {
+    this.verTodas = true;
+    this.verMisFotos = false;
+    this.tomarFoto = false;
+  }
+  listarMisFotos() {
+    this.verTodas = false;
+    this.verMisFotos = true;
+    this.tomarFoto = false;
+  }
+  crearFoto() {
+    this.verTodas = false;
+    this.verMisFotos = false;
+    this.tomarFoto = true;
   }
 }
