@@ -183,6 +183,7 @@ export class DashboardPage implements OnInit {
       });
   }
 
+  // FEDE FEDE FEDE
   uploadPhoto(file: any, isBeauty) {
     // console.log("Armando BLOB");
     const reader = new FileReader();
