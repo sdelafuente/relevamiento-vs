@@ -10,7 +10,7 @@ export class AuthGuardService implements CanActivate {
   constructor(private authService: AuthenticationService) { }
 
   canActivate(): boolean | Observable<boolean> | Promise<boolean> {
-    console.log('isAuthenticatedFirebase');
+    // console.log('isAuthenticatedFirebase');
     return this.authService.isAuthenticatedFirebase();
   }
 }

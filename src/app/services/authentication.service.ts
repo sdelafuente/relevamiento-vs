@@ -16,6 +16,7 @@ export class AuthenticationService {
 
   authenticationState = new BehaviorSubject(false);
   passKeyUser: any;
+  public usuario: any;
   constructor(private storage: Storage, private plt: Platform) {
     this.plt.ready().then( () => {
        this.checkToken();
@@ -40,12 +41,13 @@ export class AuthenticationService {
 
   isAuthenticatedFirebase(): boolean | Observable<boolean> | Promise<boolean> {
     return new Promise((resolve, reject) => {
-      console.log('isAuthenticatedFirebase');
+      // console.log('isAuthenticatedFirebase');
       firebase.auth().onAuthStateChanged((user: firebase.User) => {
         if (user) {
+           this.usuario = user;
            resolve(true);
         } else {
-          console.log('User is not logged in');
+          // console.log('User is not logged in');
           // this.router.navigate(['/login']);
           resolve(false);
         }

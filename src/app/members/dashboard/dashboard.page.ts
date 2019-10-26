@@ -63,9 +63,13 @@ export class DashboardPage implements OnInit {
   public verMisFotos: any;
   public tomarFoto: any;
 
-  constructor(private camera: Camera, private file: File, private webview: WebView,
-    private actionSheetController: ActionSheetController, private toastController: ToastController, private platform: Platform,
-    
+  constructor(
+    private camera: Camera,
+    private file: File,
+    private webview: WebView,
+    private actionSheetController: ActionSheetController,
+    private toastController: ToastController,
+    private platform: Platform,
     private database: AngularFirestore,
     private fireStorage: AngularFireStorage,
     public authService: AuthenticationService
@@ -73,7 +77,7 @@ export class DashboardPage implements OnInit {
     this.verTodas = false;
     this.verMisFotos = false;
     this.tomarFoto = true;
-
+    // console.log(this.authService.usuario);
     this.beautyPhotosCollection = database.collection<FireDTO>('beautyPhotos', ref => ref.orderBy('uploadInstant', 'desc'));
     this.uglyPhotosCollection = database.collection<FireDTO>('uglyPhotos', ref => ref.orderBy('uploadInstant', 'desc'));
 
@@ -108,7 +112,7 @@ export class DashboardPage implements OnInit {
   takeUploadPicture(isBeauty) {
 
     this.camera.getPicture(this.getCameraOptions()).then(imagePath => {
-      console.log("Ya capturo la foto: ", imagePath);
+      // console.log("Ya capturo la foto: ", imagePath);
       var correctPath = imagePath.substr(0, imagePath.lastIndexOf('/') + 1);
       var currentName = imagePath.substr(imagePath.lastIndexOf('/') + 1);
       this.saveAndUploadNewPhoto(correctPath, currentName, this.createNewPhotoName(), isBeauty);
@@ -116,7 +120,7 @@ export class DashboardPage implements OnInit {
   }
 
   sacarFotos(tipo) {
-    console.log(tipo);
+    // console.log(tipo);
   }
 
   logout() {
@@ -125,7 +129,7 @@ export class DashboardPage implements OnInit {
 
   getCameraOptions() {
     return {
-      quality: 100,
+      quality: 20,
       sourceType: PictureSourceType.CAMERA,
       saveToPhotoAlbum: false,
       correctOrientation: true
@@ -148,28 +152,28 @@ export class DashboardPage implements OnInit {
       n = d.getTime(),
       newFileName = n + ".jpg";
 
-    console.log("Creando nuevo nombre de foto.. ");
+    // console.log("Creando nuevo nombre de foto.. ");
     return newFileName;
   }
 
   saveAndUploadNewPhoto(namePath, currentName, newFileName, isBeauty) {
-    console.log("Subiendo foto 1");
+    // console.log("Subiendo foto 1");
     this.file.copyFile(namePath, currentName, this.file.dataDirectory, newFileName).then(success => {
-      console.log("Aparentemente se guardo bien en el filesystem, vamos a subirla..");
+      // console.log("Aparentemente se guardo bien en el filesystem, vamos a subirla..");
       this.sendPhotoToFirestore(this.getFilePath(newFileName), isBeauty);
     }, error => {
-      console.log("Error al guardar foto tomada");
+      // console.log("Error al guardar foto tomada");
       this.presentToast('Error guardando foto tomada.');
     });
   }
 
   getFilePath(name) {
-    console.log("Obteniendo filepath.");
+    // console.log("Obteniendo filepath.");
     return this.file.dataDirectory + name;
   }
 
   sendPhotoToFirestore(filePath, isBeauty) {
-    console.log("Mandando foto...");
+    // console.log("Mandando foto...");
     this.file.resolveLocalFilesystemUrl(filePath)
       .then(entry => {
         (<FileEntry>entry).file(file => this.uploadPhoto(file, isBeauty));
@@ -180,7 +184,7 @@ export class DashboardPage implements OnInit {
   }
 
   uploadPhoto(file: any, isBeauty) {
-    console.log("Armando BLOB");
+    // console.log("Armando BLOB");
     const reader = new FileReader();
     reader.onloadend = () => {
       const imgBlob = new Blob([reader.result], {
@@ -189,33 +193,33 @@ export class DashboardPage implements OnInit {
 
       const path = `buildingStorage/${new Date().getTime()}_${file.name}`;
 
-      console.log("Obteniendo referencia")
+      // console.log("Obteniendo referencia")
       const fileRef = this.fireStorage.ref(path);
 
-      console.log("Obteniendo tarea de upload")
+      // console.log("Obteniendo tarea de upload")
       this.task = this.fireStorage.upload(path, imgBlob);
-      console.log("Tarea obtenida")
+      // console.log("Tarea obtenida")
 
       this.task.then(as=>{
-        console.log("Finalizo el upload")
-        console.log("Obteniendo path de descarga del archivo")
+        // console.log("Finalizo el upload")
+        // console.log("Obteniendo path de descarga del archivo")
         // Get uploaded file storage path
         this.UploadedFileURL = fileRef.getDownloadURL();
 
-        console.log("Iniciando upload a la DB")
+        // console.log("Iniciando upload a la DB")
         this.UploadedFileURL.subscribe(resp => {
           this.addImagetoDB({
             name: file.name,
             filepath: resp,
             votes: 0,
             uploadInstant: Date.now(),
-            userName: "el usuario"
+            userName: this.authService.usuario.email
           }, isBeauty ? this.beautyPhotosCollection : this.uglyPhotosCollection);
           this.isUploading = false;
           this.isUploaded = true;
           this.deleteImage(file.name)
         }, error => {
-          console.log("Erorrr")
+          // console.log("Erorrr")
           console.error(error);
         })
       });
@@ -235,15 +239,15 @@ export class DashboardPage implements OnInit {
   addImagetoDB(image: FireDTO, imagesCollection: AngularFirestoreCollection<FireDTO>) {
     //Create an ID for document
 
-    console.log("Agregando foto a la DB");
-    console.log("Creando ID");
+    // console.log("Agregando foto a la DB");
+    // console.log("Creando ID");
     const id = this.database.createId();
 
-    console.log("Id creado, enviando...");
+    // console.log("Id creado, enviando...");
     //Set document id with value in database
     imagesCollection.doc(id).set(image).then(resp => {
-      console.log("Response del envio", resp);
-      console.log(resp);
+      // console.log("Response del envio", resp);
+      // console.log(resp);
     }).catch(error => {
       console.log("error " + error);
     });
@@ -262,7 +266,7 @@ export class DashboardPage implements OnInit {
     let imgEntry = this.getPhotoData(imageName);
     var correctPath = imgEntry.filePath.substr(0, imgEntry.filePath.lastIndexOf('/') + 1);
     this.file.removeFile(correctPath, imgEntry.name).then(res => {
-      console.log("Foto borrada de la cache.")
+      // console.log("Foto borrada de la cache.")
     });
   }
 
@@ -402,21 +406,21 @@ export class DashboardPage implements OnInit {
   //   });
   // }
 
-  // vote(docId, incrementVotes: boolean, photoType: PhotoType) {
+  vote(docId, incrementVotes: boolean, photoType: PhotoType) {
 
-  //   const imageRef = photoType == PhotoType.POSITIVE ? this.beautyPhotosCollection.doc(docId).ref : this.uglyPhotosCollection.doc(docId).ref;
+    const imageRef = photoType == PhotoType.POSITIVE ? this.beautyPhotosCollection.doc(docId).ref : this.uglyPhotosCollection.doc(docId).ref;
 
-  //   this.database.firestore.runTransaction(transaction => {
-  //     return transaction.get(imageRef).then(res => {
-  //       if (!res.exists) {
-  //         throw "Document does not exist!";
-  //       }
+    this.database.firestore.runTransaction(transaction => {
+      return transaction.get(imageRef).then(res => {
+        if (!res.exists) {
+          throw "Document does not exist!";
+        }
 
-  //       transaction.update(imageRef, {
-  //         votes: incrementVotes ? res.data().votes + 1 : res.data().votes - 1
-  //       });
+        transaction.update(imageRef, {
+          votes: incrementVotes ? res.data().votes + 1 : res.data().votes - 1
+        });
 
-  //     })
-  //   });
-  // }
+      })
+    });
+  }
 }

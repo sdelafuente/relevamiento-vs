@@ -90,7 +90,7 @@ export class LoginPage implements OnInit {
   }
 
   onSubmit(valores) {
-    console.log(valores);
+    // console.log(valores);
     // this.login();
     this.authService.loginUser(valores.email, valores.password);
   }

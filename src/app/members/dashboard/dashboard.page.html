@@ -10,6 +10,8 @@
 </ion-header>
 
 <ion-content>
+
+
   <div class="contenedor" *ngIf="tomarFoto">
     <ion-button class ="boton" color="primary" expand="full" type="button" (click)="selectImage(true)">Cosas Lindas</ion-button>
     <ion-button class ="boton" color="success" expand="full" type="button" (click)="selectImage(false)">Cosas Feas</ion-button>
@@ -18,10 +20,72 @@
     ver mis fotos
   </div>
   <div class="contenedor" *ngIf="verTodas">
-    ver todas
+    <!-- <h2 text-center>Uploaded Beauty Images</h2> -->
+
+    <div class="" text-center *ngFor="let item of beautyPhotos | async">
+      <div class="">
+        <button ion-button icon-left clear small (click)="vote(item.documentId, true, 'POSITIVE')">
+          Votar<ion-icon name="thumbs-up"></ion-icon>
+        </button>
+      </div>
+      <div class="">
+        <img [src]="item.filepath" />
+        <div>Votos : {{ item.votes }} </div>
+        <div class="">
+            item.username
+        </div>
+      </div>
+      <!-- <ion-card-header> -->
+        <!-- <ion-card-title>
+          {{ item.name }} -- {{ item.documentId }}
+        </ion-card-title> -->
+
+        <!-- <button ion-button icon-left clear small  (click)="vote(item.documentId, false, 'POSITIVE')">
+          Votar Negativo<ion-icon name="nuclear"></ion-icon>
+        </button> -->
+      <!-- </ion-card-header> -->
+
+      <!-- <ion-card-content> -->
+
+        <!-- <a [href]="item.filepath" target="_blank" rel="noopener">Download</a> -->
+      <!-- </ion-card-content> -->
+    </div>
+
+    <!-- <h2 text-center>Uploaded Ugly Images</h2> -->
+    <div class="" text-center *ngFor="let item of uglyPhotos | async">
+      <!-- <ion-card-header> -->
+        <!-- <ion-card-title>
+          {{ item.name }} -- {{ item.documentId }}
+        </ion-card-title> -->
+        <!-- <button ion-button icon-left clear small  (click)="vote(item.documentId, true, 'NEGATIVE')">
+          Votar<ion-icon name="thumbs-up"></ion-icon>
+        </button> -->
+        <!-- <button ion-button icon-left clear small  (click)="vote(item.documentId, false, 'NEGATIVE')">
+          Votar Negativo<ion-icon name="nuclear"></ion-icon>
+        </button> -->
+      <!-- </ion-card-header> -->
+      <div class="">
+        <button ion-button icon-left clear small  (click)="vote(item.documentId, true, 'NEGATIVE')">
+          Votar<ion-icon name="thumbs-up"></ion-icon>
+        </button>
+      </div>
+      <div class="">
+        <img [src]="item.filepath" />
+        <div>Votos : {{ item.votes }} </div>
+        <div class="">
+            item.username
+        </div>
+      </div>
+      <!-- <ion-card-content>
+        <img [src]="item.filepath" />
+        <div>Votos : {{ item.votes }} </div> -->
+        <!-- <a [href]="item.filepath" target="_blank" rel="noopener">Download</a> -->
+      <!-- </ion-card-content> -->
+    </div>
   </div>
 
-  <ion-fab vertical="bottom" horizontal="end">
+  <!-- <ion-fab vertical="bottom" horizontal="end" activated="true" edge slot="fixed"> -->
+  <ion-fab vertical="bottom" horizontal="end" >
       <ion-fab-button>
         <ion-icon name="add"></ion-icon>
       </ion-fab-button>
@@ -39,7 +103,6 @@
     </ion-fab>
 
 </ion-content>
-
 
  <!-- <ion-header>
   <ion-toolbar>
@@ -105,46 +168,7 @@
     </ion-card-content>
   </ion-card>
 
-  <h2 text-center>Uploaded Beauty Images</h2>
-  <ion-card color="light" text-center *ngFor="let item of beautyPhotos | async">
-    <ion-card-header>
-      <ion-card-title>
-        {{ item.name }} -- {{ item.documentId }}
-      </ion-card-title>
-      <button ion-button icon-left clear small (click)="vote(item.documentId, true, 'POSITIVE')">
-        Votar Positivo<ion-icon name="thumbs-up"></ion-icon>
-      </button>
-      <button ion-button icon-left clear small  (click)="vote(item.documentId, false, 'POSITIVE')">
-        Votar Negativo<ion-icon name="nuclear"></ion-icon>
-      </button>
-    </ion-card-header>
+-->
 
-    <ion-card-content>
-      <img [src]="item.filepath" />
-      <div>Votos : {{ item.votes }} </div>
-      <a [href]="item.filepath" target="_blank" rel="noopener">Download</a>
-    </ion-card-content>
-  </ion-card>
 
-  <h2 text-center>Uploaded Ugly Images</h2>
-  <ion-card color="light" text-center *ngFor="let item of uglyPhotos | async">
-    <ion-card-header>
-      <ion-card-title>
-        {{ item.name }} -- {{ item.documentId }}
-      </ion-card-title>
-      <button ion-button icon-left clear small  (click)="vote(item.documentId, true, 'NEGATIVE')">
-        Votar Positivo<ion-icon name="thumbs-up"></ion-icon>
-      </button>
-      <button ion-button icon-left clear small  (click)="vote(item.documentId, false, 'NEGATIVE')">
-        Votar Negativo<ion-icon name="nuclear"></ion-icon>
-      </button>
-    </ion-card-header>
-
-    <ion-card-content>
-      <img [src]="item.filepath" />
-      <div>Votos : {{ item.votes }} </div>
-      <a [href]="item.filepath" target="_blank" rel="noopener">Download</a>
-    </ion-card-content>
-  </ion-card>
-
-</ion-content>  -->
+<!-- <</ion-content>  -->
