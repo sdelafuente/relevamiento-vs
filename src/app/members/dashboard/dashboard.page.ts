@@ -2,7 +2,7 @@ import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
 import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/storage';
 import { Observable, pipe } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { finalize, map, tap, catchError } from 'rxjs/operators';
 import { FireDTO } from '../../fire-dto';
 import { Image } from '../../Image';
 
@@ -15,7 +15,6 @@ import { WebView } from '@ionic-native/ionic-webview/ngx';
 
 import { ActionSheetController, ToastController, LoadingController, Platform } from '@ionic/angular';
 import { PhotoType } from '../../PhotoType';
-const STORAGE_KEY = 'my_images';
 
 import { Camera, CameraOptions, PictureSourceType } from '@ionic-native/camera/ngx';
 
@@ -28,7 +27,7 @@ import { AuthenticationService } from '../../services/authentication.service';
 })
 export class DashboardPage implements OnInit {
 
-// Upload Task
+  // Upload Task
   task: AngularFireUploadTask;
 
   // Progress in percentage
@@ -54,14 +53,258 @@ export class DashboardPage implements OnInit {
   isUploading: boolean;
   isUploaded: boolean;
 
-  // private imageCollection: AngularFirestoreCollection<FireDTO>;
 
   private beautyPhotosCollection: AngularFirestoreCollection<FireDTO>;
   private uglyPhotosCollection: AngularFirestoreCollection<FireDTO>;
 
-  // EMM HAY QUE HACER ITERAR ALGO MOTRAR FOTOS??
+  images = [];
 
-  // constructor(private storage: AngularFireStorage, private database: AngularFirestore) {
+  public verTodas: any;
+  public verMisFotos: any;
+  public tomarFoto: any;
+
+  constructor(private camera: Camera, private file: File, private webview: WebView,
+    private actionSheetController: ActionSheetController, private toastController: ToastController, private platform: Platform,
+    
+    private database: AngularFirestore,
+    private fireStorage: AngularFireStorage,
+    public authService: AuthenticationService
+  ) {
+    this.verTodas = false;
+    this.verMisFotos = false;
+    this.tomarFoto = true;
+
+    this.beautyPhotosCollection = database.collection<FireDTO>('beautyPhotos', ref => ref.orderBy('uploadInstant', 'desc'));
+    this.uglyPhotosCollection = database.collection<FireDTO>('uglyPhotos', ref => ref.orderBy('uploadInstant', 'desc'));
+
+    this.beautyPhotos = this.beautyPhotosCollection.snapshotChanges().pipe(
+      map(actions =>
+        actions.map(a => {
+          const data = a.payload.doc.data() as FireDTO;
+          const documentId = a.payload.doc.id;
+          return { documentId, ...data };
+        })
+      )
+    );
+
+    this.uglyPhotos = this.uglyPhotosCollection.snapshotChanges().pipe(
+      map(actions =>
+        actions.map(a => {
+          const data = a.payload.doc.data() as FireDTO;
+          const documentId = a.payload.doc.id;
+          return { documentId, ...data };
+        })
+      )
+    );
+
+  }
+
+  ngOnInit() {
+    this.platform.ready().then(() => {
+      // this.loadStoredImages();
+    });
+  }
+
+  takeUploadPicture(isBeauty) {
+
+    this.camera.getPicture(this.getCameraOptions()).then(imagePath => {
+      console.log("Ya capturo la foto: ", imagePath);
+      var correctPath = imagePath.substr(0, imagePath.lastIndexOf('/') + 1);
+      var currentName = imagePath.substr(imagePath.lastIndexOf('/') + 1);
+      this.saveAndUploadNewPhoto(correctPath, currentName, this.createNewPhotoName(), isBeauty);
+    });
+  }
+
+  sacarFotos(tipo) {
+    console.log(tipo);
+  }
+
+  logout() {
+    this.authService.logout();
+  }
+
+  getCameraOptions() {
+    return {
+      quality: 100,
+      sourceType: PictureSourceType.CAMERA,
+      saveToPhotoAlbum: false,
+      correctOrientation: true
+    }
+  }
+
+  getPhotoData(name) {
+    let filePath = this.file.dataDirectory + name;
+    let resPath = this.pathForImage(filePath);
+
+    return {
+      name: name,
+      path: resPath,
+      filePath: filePath
+    }
+  }
+
+  createNewPhotoName() {
+    var d = new Date(),
+      n = d.getTime(),
+      newFileName = n + ".jpg";
+
+    console.log("Creando nuevo nombre de foto.. ");
+    return newFileName;
+  }
+
+  saveAndUploadNewPhoto(namePath, currentName, newFileName, isBeauty) {
+    console.log("Subiendo foto 1");
+    this.file.copyFile(namePath, currentName, this.file.dataDirectory, newFileName).then(success => {
+      console.log("Aparentemente se guardo bien en el filesystem, vamos a subirla..");
+      this.sendPhotoToFirestore(this.getFilePath(newFileName), isBeauty);
+    }, error => {
+      console.log("Error al guardar foto tomada");
+      this.presentToast('Error guardando foto tomada.');
+    });
+  }
+
+  getFilePath(name) {
+    console.log("Obteniendo filepath.");
+    return this.file.dataDirectory + name;
+  }
+
+  sendPhotoToFirestore(filePath, isBeauty) {
+    console.log("Mandando foto...");
+    this.file.resolveLocalFilesystemUrl(filePath)
+      .then(entry => {
+        (<FileEntry>entry).file(file => this.uploadPhoto(file, isBeauty));
+      })
+      .catch(err => {
+        this.presentToast('Error leyendo foto guardada.');
+      });
+  }
+
+  uploadPhoto(file: any, isBeauty) {
+    console.log("Armando BLOB");
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const imgBlob = new Blob([reader.result], {
+        type: ".jpg"
+      });
+
+      const path = `buildingStorage/${new Date().getTime()}_${file.name}`;
+
+      console.log("Obteniendo referencia")
+      const fileRef = this.fireStorage.ref(path);
+
+      console.log("Obteniendo tarea de upload")
+      this.task = this.fireStorage.upload(path, imgBlob);
+      console.log("Tarea obtenida")
+
+      this.task.then(as=>{
+        console.log("Finalizo el upload")
+        console.log("Obteniendo path de descarga del archivo")
+        // Get uploaded file storage path
+        this.UploadedFileURL = fileRef.getDownloadURL();
+
+        console.log("Iniciando upload a la DB")
+        this.UploadedFileURL.subscribe(resp => {
+          this.addImagetoDB({
+            name: file.name,
+            filepath: resp,
+            votes: 0,
+            uploadInstant: Date.now(),
+            userName: "el usuario"
+          }, isBeauty ? this.beautyPhotosCollection : this.uglyPhotosCollection);
+          this.isUploading = false;
+          this.isUploaded = true;
+          this.deleteImage(file.name)
+        }, error => {
+          console.log("Erorrr")
+          console.error(error);
+        })
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  pathForImage(img) {
+    if (img === null) {
+      return '';
+    } else {
+      let converted = this.webview.convertFileSrc(img);
+      return converted;
+    }
+  }
+
+  addImagetoDB(image: FireDTO, imagesCollection: AngularFirestoreCollection<FireDTO>) {
+    //Create an ID for document
+
+    console.log("Agregando foto a la DB");
+    console.log("Creando ID");
+    const id = this.database.createId();
+
+    console.log("Id creado, enviando...");
+    //Set document id with value in database
+    imagesCollection.doc(id).set(image).then(resp => {
+      console.log("Response del envio", resp);
+      console.log(resp);
+    }).catch(error => {
+      console.log("error " + error);
+    });
+  }
+
+  async presentToast(text) {
+    const toast = await this.toastController.create({
+      message: text,
+      position: 'bottom',
+      duration: 3000
+    });
+    toast.present();
+  }
+
+  deleteImage(imageName) {
+    let imgEntry = this.getPhotoData(imageName);
+    var correctPath = imgEntry.filePath.substr(0, imgEntry.filePath.lastIndexOf('/') + 1);
+    this.file.removeFile(correctPath, imgEntry.name).then(res => {
+      console.log("Foto borrada de la cache.")
+    });
+  }
+
+  async selectImage(isBeauty) {
+    const actionSheet = await this.actionSheetController.create({
+      header: "Select Image source",
+      buttons: [
+        {
+          text: 'Use Camera',
+          handler: () => {
+            this.takeUploadPicture(isBeauty);
+          }
+        },
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        }
+      ]
+    });
+    await actionSheet.present();
+  }
+
+  listarTodas() {
+    this.verTodas = true;
+    this.verMisFotos = false;
+    this.tomarFoto = false;
+  }
+  listarMisFotos() {
+    this.verTodas = false;
+    this.verMisFotos = true;
+    this.tomarFoto = false;
+  }
+  crearFoto() {
+    this.verTodas = false;
+    this.verMisFotos = false;
+    this.tomarFoto = true;
+  }
+
+
+
+
+  // constructor(private storage: AngularFireStorage, private database: AngularFirestore, private platform: Platform) {
   //   this.isUploading = false;
   //   this.isUploaded = false;
   //   //Set collection where our documents/ images info will save
@@ -176,207 +419,4 @@ export class DashboardPage implements OnInit {
   //     })
   //   });
   // }
-
-
-
-  images = [];
-
-  public verTodas: any;
-  public verMisFotos: any;
-  public tomarFoto: any;
-
-  constructor(private camera: Camera, private file: File, private webview: WebView,
-    private actionSheetController: ActionSheetController, private toastController: ToastController,
-    private storage: Storage, private platform: Platform, private loadingController: LoadingController,
-    private ref: ChangeDetectorRef, private filePath: FilePath,
-    private database: AngularFirestore,
-    private fireStorage: AngularFireStorage,
-    public authService: AuthenticationService
-   ) {
-     this.verTodas = false;
-     this.verMisFotos = false;
-     this.tomarFoto = true;
-   }
-
-  ngOnInit() {
-    this.platform.ready().then(() => {
-      // this.loadStoredImages();
-    });
-  }
-
-  // loadStoredImages() {
-  //   this.storage.get(STORAGE_KEY).then(images => {
-  //     if (images) {
-  //       let arr = JSON.parse(images);
-  //       this.images = [];
-  //       for (let img of arr) {
-  //         let filePath = this.file.dataDirectory + img;
-  //         let resPath = this.pathForImage(filePath);
-  //         this.images.push({ name: img, path: resPath, filePath: filePath });
-  //       }
-  //     }
-  //   });
-  // }
-
-  takeUploadPicture() {
-
-    this.camera.getPicture(this.getCameraOptions()).then(imagePath => {
-      console.log("Ya capturo la foto: ", imagePath);
-      var correctPath = imagePath.substr(0, imagePath.lastIndexOf('/') + 1);
-      var currentName = imagePath.substr(imagePath.lastIndexOf('/') + 1);
-      this.saveAndUploadNewPhoto(correctPath, currentName, this.createNewPhotoName());
-    });
-  }
-
-  sacarFotos(tipo) {
-    console.log(tipo);
-  }
-
-  logout() {
-    this.authService.logout();
-  }
-
-  getCameraOptions() {
-    return {
-      quality: 100,
-      sourceType: PictureSourceType.CAMERA,
-      saveToPhotoAlbum: false,
-      correctOrientation: true
-    }
-  }
-
-  getPhotoData(name) {
-    let filePath = this.file.dataDirectory + name;
-    let resPath = this.pathForImage(filePath);
-
-    return {
-      name: name,
-      path: resPath,
-      filePath: filePath
-    }
-  }
-
-  createNewPhotoName() {
-    var d = new Date(),
-      n = d.getTime(),
-      newFileName = n + ".jpg";
-
-    console.log("Creando nuevo nombre de foto.. ");
-    return newFileName;
-  }
-
-  saveAndUploadNewPhoto(namePath, currentName, newFileName) {
-    console.log("Subiendo foto 1");
-    this.file.copyFile(namePath, currentName, this.file.dataDirectory, newFileName).then(success => {
-      console.log("Aparentemente se guardo bien, vamos a subirla..");
-      this.sendPhotoToFirestore(this.getFilePath(newFileName));
-    }, error => {
-      console.log("Error al guardar foto tomada");
-      this.presentToast('Error guardando foto tomada.');
-    });
-  }
-
-  startUpload(imgEntry) {
-    this.file.resolveLocalFilesystemUrl(imgEntry.filePath)
-      .then(entry => {
-        (<FileEntry>entry).file(file => this.uploadPhoto(file))
-      })
-      .catch(err => {
-        this.presentToast('Error al leer foto tomada.');
-      });
-  }
-
-  getFilePath(name) {
-    console.log("Obteniendo filepath.");
-    return this.file.dataDirectory + name;
-  }
-
-
-  sendPhotoToFirestore(filePath) {
-    console.log("Mandando foto...");
-    this.file.resolveLocalFilesystemUrl(filePath)
-      .then(entry => {
-        (<FileEntry>entry).file(file => this.uploadPhoto(file));
-      })
-      .catch(err => {
-        this.presentToast('Error leyendo foto guardada.');
-      });
-  }
-
-  uploadPhoto(file: any) {
-    console.log("Armando BLOB");
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imgBlob = new Blob([reader.result], {
-        type: ".jpg"
-      });
-
-      const path = `buildingStorage/${new Date().getTime()}_${file.name}`;
-      this.task = this.fireStorage.upload(path, imgBlob);
-      this.deleteImage(file.name);
-      this.presentToast('Foto subida con exito.');
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  pathForImage(img) {
-    if (img === null) {
-      return '';
-    } else {
-      let converted = this.webview.convertFileSrc(img);
-      return converted;
-    }
-  }
-
-  async presentToast(text) {
-    const toast = await this.toastController.create({
-      message: text,
-      position: 'bottom',
-      duration: 3000
-    });
-    toast.present();
-  }
-
-  deleteImage(imageName) {
-    let imgEntry = this.getPhotoData(imageName);
-    var correctPath = imgEntry.filePath.substr(0, imgEntry.filePath.lastIndexOf('/') + 1);
-    this.file.removeFile(correctPath, imgEntry.name).then(res => {
-      console.log("Foto borrada de la cache.")
-    });
-  }
-
-  async selectImage() {
-    const actionSheet = await this.actionSheetController.create({
-      header: "Select Image source",
-      buttons: [
-        {
-          text: 'Use Camera',
-          handler: () => {
-            this.takeUploadPicture();
-          }
-        },
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        }
-      ]
-    });
-    await actionSheet.present();
-  }
-
-  listarTodas() {
-    this.verTodas = true;
-    this.verMisFotos = false;
-    this.tomarFoto = false;
-  }
-  listarMisFotos() {
-    this.verTodas = false;
-    this.verMisFotos = true;
-    this.tomarFoto = false;
-  }
-  crearFoto() {
-    this.verTodas = false;
-    this.verMisFotos = false;
-    this.tomarFoto = true;
-  }
 }
