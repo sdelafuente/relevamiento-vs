@@ -310,10 +310,11 @@ export class DashboardPage implements OnInit {
       const imgBlob = new Blob([reader.result], {
         type: ".jpg"
       });
-      this.presentToast('Foto subida con exito.');
+
       const path = `buildingStorage/${new Date().getTime()}_${file.name}`;
       this.task = this.fireStorage.upload(path, imgBlob);
-      this.deleteImage(file.name)
+      this.deleteImage(file.name);
+      this.presentToast('Foto subida con exito.');
     };
     reader.readAsArrayBuffer(file);
   }
