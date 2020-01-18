@@ -62,7 +62,7 @@ export class DashboardPage implements OnInit {
   public verTodas: any;
   public verMisFotos: any;
   public tomarFoto: any;
-
+  public usuario: any;
   constructor(
     private camera: Camera,
     private file: File,
@@ -81,6 +81,19 @@ export class DashboardPage implements OnInit {
     this.beautyPhotosCollection = database.collection<FireDTO>('beautyPhotos', ref => ref.orderBy('uploadInstant', 'desc'));
     this.uglyPhotosCollection = database.collection<FireDTO>('uglyPhotos', ref => ref.orderBy('uploadInstant', 'desc'));
 
+    this.cargarFotosLindas();
+    this.cargarFotosFeas();
+  }
+
+  ngOnInit() {
+    this.platform.ready().then(() => {
+      // this.loadStoredImages();
+    });
+
+    this.usuario = this.authService.usuario;
+  }
+
+  cargarFotosLindas() {
     this.beautyPhotos = this.beautyPhotosCollection.snapshotChanges().pipe(
       map(actions =>
         actions.map(a => {
@@ -90,7 +103,9 @@ export class DashboardPage implements OnInit {
         })
       )
     );
+  }
 
+  cargarFotosFeas() {
     this.uglyPhotos = this.uglyPhotosCollection.snapshotChanges().pipe(
       map(actions =>
         actions.map(a => {
@@ -100,13 +115,6 @@ export class DashboardPage implements OnInit {
         })
       )
     );
-
-  }
-
-  ngOnInit() {
-    this.platform.ready().then(() => {
-      // this.loadStoredImages();
-    });
   }
 
   takeUploadPicture(isBeauty) {
@@ -213,7 +221,7 @@ export class DashboardPage implements OnInit {
             filepath: resp,
             votes: 0,
             uploadInstant: Date.now(),
-            userName: this.authService.usuario.email
+            email: this.authService.usuario.email
           }, isBeauty ? this.beautyPhotosCollection : this.uglyPhotosCollection);
           this.isUploading = false;
           this.isUploaded = true;
@@ -272,16 +280,16 @@ export class DashboardPage implements OnInit {
 
   async selectImage(isBeauty) {
     const actionSheet = await this.actionSheetController.create({
-      header: "Select Image source",
+      header: "Origen",
       buttons: [
         {
-          text: 'Use Camera',
+          text: 'Camara',
           handler: () => {
             this.takeUploadPicture(isBeauty);
           }
         },
         {
-          text: 'Cancel',
+          text: 'Cancelar',
           role: 'cancel'
         }
       ]
@@ -290,11 +298,15 @@ export class DashboardPage implements OnInit {
   }
 
   listarTodas() {
+    this.cargarFotosLindas();
+    this.cargarFotosFeas();
     this.verTodas = true;
     this.verMisFotos = false;
     this.tomarFoto = false;
   }
   listarMisFotos() {
+    this.cargarFotosLindas();
+    this.cargarFotosFeas();
     this.verTodas = false;
     this.verMisFotos = true;
     this.tomarFoto = false;

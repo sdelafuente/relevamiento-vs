@@ -32,7 +32,7 @@ export class AppComponent {
       firebase.initializeApp(environment.firebase);
 
       this.authService.authenticationState.subscribe( state => {
-        console.log('Cambio de estado', state);
+        // console.log('Cambio de estado', state);
         if (state) {
           this.router.navigate(['members', 'dashboard']);
         } else {

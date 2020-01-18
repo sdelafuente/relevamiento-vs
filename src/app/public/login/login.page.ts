@@ -10,6 +10,7 @@ import { Validators, FormBuilder, FormGroup, FormControl } from '@angular/forms'
 })
 export class LoginPage implements OnInit {
 
+  splash: boolean;
   validationsForm: FormGroup;
   matching_passwords_group: FormGroup;
   validation_messages = {
@@ -50,7 +51,9 @@ export class LoginPage implements OnInit {
     ],
   };
 
-  constructor(private authService: AuthenticationService, public formBuilder: FormBuilder) { }
+  constructor(private authService: AuthenticationService, public formBuilder: FormBuilder) {
+    this.splash = true;
+  }
 
 
   ngOnInit() {
@@ -82,8 +85,12 @@ export class LoginPage implements OnInit {
           ]))
          // matching_passwords: this.matching_passwords_group,
       });
+      this.ionViewDidLoad();
   }
 
+  ionViewDidLoad() {
+    setTimeout(() => this.splash = false, 3000);
+  }
 
   login() {
     this.authService.login();

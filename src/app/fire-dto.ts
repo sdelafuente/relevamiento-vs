@@ -3,5 +3,6 @@ export interface FireDTO {
     name: string;
     votes: number;
     uploadInstant: number;
-    userName: string;
+    // userName: string;
+    email: string;
 }
